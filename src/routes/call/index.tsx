@@ -1,5 +1,5 @@
 import { useParams } from "react-router";
-import { createOrGetMyPeer, getMediaStream } from "../../services/peerjs";
+import { getOrCreateMyPeer, getMediaStream } from "../../services/peerjs";
 import React from "react";
 import Peer from "peerjs";
 
@@ -14,7 +14,7 @@ export default function Call() {
   const myId = `furkan-${id}`;
   const myVideoRef = React.useRef<HTMLVideoElement>(null);
   const otherVideoRef = React.useRef<HTMLVideoElement>(null);
-  const myPeer = React.useRef<Peer | null>(null);
+  const [myPeer, setMyPeer] = React.useState<Peer | null>(null);
 
   React.useEffect(() => {
     (async () => {
@@ -22,14 +22,16 @@ export default function Call() {
         throw new Error("No id");
       }
 
-      myPeer.current = await createOrGetMyPeer(myId);
+      console.log('getting peer')
+      const createdPeer = await getOrCreateMyPeer(myId);
+      setMyPeer(createdPeer);
 
       const myStream = await getMediaStream();
       if (myVideoRef.current) {
         myVideoRef.current.srcObject = myStream;
       }
 
-      myPeer.current.on("call", (call) => {
+      createdPeer.on("call", (call) => {
         console.log("Got call");
         call.answer(myStream);
         call.on("stream", (otherStream) => {
@@ -41,7 +43,7 @@ export default function Call() {
 
       console.log('calling', getOtherUserId(myId), myStream)
       setTimeout(() => {
-        const call = myPeer.current!.call(getOtherUserId(myId), myStream);
+        const call = myPeer!.call(getOtherUserId(myId), myStream);
         call.on("stream", (otherStream) => {
           if (otherVideoRef.current) {
             otherVideoRef.current.srcObject = otherStream;
@@ -54,7 +56,7 @@ export default function Call() {
 
   return (
     <div>
-      <h1 className="video-page-title">Here is call {myId}. The other user is {getOtherUserId(myId)}</h1>
+      <h1 className="video-page-title">Here is call {myPeer?.id}. The other user is {getOtherUserId(myId)}</h1>
       <div className="video-page-container">
         <div className="video-element-container">
           <video ref={myVideoRef} width="100%" height="100%" autoPlay />

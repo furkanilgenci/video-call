@@ -2,13 +2,42 @@ import { Peer } from "peerjs";
 
 let myPeer: Peer;
 
-export async function createOrGetMyPeer(id: string) {
+// Recursive promise 🤯
+export async function getOrCreateMyPeer(id: string, idOffset: number = 0): Promise<Peer> {
+  console.log('called', {id, idOffset});
   if (myPeer) {
     return myPeer;
   }
 
-  myPeer = new Peer(id);
-  return myPeer;
+  return new Promise((resolve, reject) => {
+    const attemptedPeer = new Peer(`${id}-${idOffset}`);
+
+    attemptedPeer.on('error', (err) => {
+      if (!err.type) {
+        reject(err);
+      } 
+
+      if (['invalid-id', 'browser-incompatible'].indexOf(err.type) !== -1) {
+        reject(err);
+      } 
+
+      if (err.type === 'unavailable-id') {
+      console.log('My peer is unavailable. Trying again with a different id.');
+        getOrCreateMyPeer(id, idOffset + 1).then(resolve).catch(reject);
+        return;
+      } 
+
+      // Basically 500 for all other error types.
+      const errorMessage = 'Oops. Something went wrong internally! :(: ' + err;
+      reject(Error(errorMessage));
+    })
+
+    attemptedPeer.on('open', () => {
+      console.log('My peer is open');
+      myPeer = attemptedPeer;
+      resolve(attemptedPeer);
+    })
+  });
 }
 
 export async function getMediaStream() {
