@@ -1,20 +1,15 @@
 import { useParams } from "react-router";
-import { getOrCreateMyPeer, getMediaStream } from "../../services/peerjs";
+import { getOrCreateMyPeer, getMediaStream, isHost, getHostId } from "../../services/peerjs";
 import React from "react";
 import Peer from "peerjs";
-
-
-// temp
-function getOtherUserId(id: string) {
-  return id === "furkan-1" ? "furkan-2" : "furkan-1";
-}
+import VideoElement from "./_components/video-element";
 
 export default function Call() {
   const { id } = useParams();
-  const myId = `furkan-${id}`;
+  const myId = id;
   const myVideoRef = React.useRef<HTMLVideoElement>(null);
-  const otherVideoRef = React.useRef<HTMLVideoElement>(null);
   const [myPeer, setMyPeer] = React.useState<Peer | null>(null);
+  const [connectedStreams, setConnectedStreams] = React.useState<MediaStream[]>([]);
 
   React.useEffect(() => {
     (async () => {
@@ -35,35 +30,34 @@ export default function Call() {
         console.log("Got call");
         call.answer(myStream);
         call.on("stream", (otherStream) => {
-          if (otherVideoRef.current) {
-            otherVideoRef.current.srcObject = otherStream;
-          }
+        setConnectedStreams(current => [...current, otherStream])
         });
       });
 
-      console.log('calling', getOtherUserId(myId), myStream)
-      setTimeout(() => {
-        const call = myPeer!.call(getOtherUserId(myId), myStream);
-        call.on("stream", (otherStream) => {
-          if (otherVideoRef.current) {
-            otherVideoRef.current.srcObject = otherStream;
+      if(!isHost(myId)) {
+        setTimeout(() => {
+          const userToCall = getHostId(myId);
+          console.log('calling', userToCall , myStream)
+          const call = createdPeer!.call(userToCall, myStream);
+          call.on("stream", (otherStream) => {
+            setConnectedStreams(current => [...current, otherStream])
           }
-        }
-      );
-      }, 2000)
+        );
+        }, 2000)
+      }
     })()
   }, [])
 
   return (
     <div>
-      <h1 className="video-page-title">Here is call {myPeer?.id}. The other user is {getOtherUserId(myId)}</h1>
+      <h1 className="video-page-title">Here is call the call, I am {myPeer?.id}.</h1>
       <div className="video-page-container">
         <div className="video-element-container">
-          <video ref={myVideoRef} width="100%" height="100%" autoPlay />
+          <video ref={myVideoRef} width="100%" height="100%" autoPlay muted playsInline />
         </div>
-        <div className="video-element-container">
-          <video ref={otherVideoRef} width="100%" height="100%" autoPlay />
-        </div>
+        {connectedStreams.map((stream, index) => (
+          <VideoElement key={index} stream={stream} />
+        ))}
       </div>
     </div>
   );

@@ -54,11 +54,11 @@ export async function getMediaStream() {
   return mediaStream;
 }
 
-
-export function getMyPeer() {
-  return myPeer;
+export function getHostId(id: string) {
+  return id.split('-')[0] + '-0';
 }
 
-export function connectToPeer(id: string) {
-  return myPeer.connect(id);
+export function isHost(id: string) {
+  return id.endsWith('-0');
 }
+
