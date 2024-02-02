@@ -54,10 +54,14 @@ export default function Call() {
 
   return (
     <div>
-      <p>Here is call {myId}. The other user is {getOtherUserId(myId)}</p>
-      <div>
-        <video ref={myVideoRef} width="64" height="48" autoPlay />
-        <video ref={otherVideoRef} width="64" height="48" autoPlay />
+      <h1 className="video-page-title">Here is call {myId}. The other user is {getOtherUserId(myId)}</h1>
+      <div className="video-page-container">
+        <div className="video-element-container">
+          <video ref={myVideoRef} width="100%" height="100%" autoPlay />
+        </div>
+        <div className="video-element-container">
+          <video ref={otherVideoRef} width="100%" height="100%" autoPlay />
+        </div>
       </div>
     </div>
   );
