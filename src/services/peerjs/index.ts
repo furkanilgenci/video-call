@@ -12,7 +12,15 @@ export async function createOrGetMyPeer(id: string) {
 }
 
 export async function getMediaStream() {
-  const mediaStream = await navigator.mediaDevices.getUserMedia({ video: true });
+  const mediaStream = await navigator.mediaDevices.getUserMedia({ 
+    video: { 
+      width: 128, height: 72,
+      frameRate: { 
+        ideal: 30, 
+        max: 60
+      },
+    },
+  });
 
   return mediaStream;
 }
