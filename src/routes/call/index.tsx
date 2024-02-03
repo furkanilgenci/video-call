@@ -34,9 +34,9 @@ export default function Call() {
         })
       })
 
-      if (!isHost(myId)) {
+      if (!isHost(createdPeer.id)) {
         setTimeout(() => {
-          const userToCall = getHostId(myId)
+          const userToCall = getHostId(createdPeer.id)
           console.log('calling', userToCall, myStream)
           const call = createdPeer!.call(userToCall, myStream)
           call.on("stream", (otherStream) => {
