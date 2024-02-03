@@ -6,19 +6,19 @@ import VideoElement from "./_components/video-element"
 
 export default function Call() {
   const { id } = useParams()
-  const myId = id
+  const callId = id
   const myVideoRef = React.useRef<HTMLVideoElement>(null)
   const [myPeer, setMyPeer] = React.useState<Peer | null>(null)
   const [connectedStreams, setConnectedStreams] = React.useState<MediaStream[]>([])
 
   React.useEffect(() => {
     (async () => {
-      if (!myId) {
+      if (!callId) {
         throw new Error("No id")
       }
 
       console.log('getting peer')
-      const createdPeer = await getOrCreateMyPeer(myId)
+      const createdPeer = await getOrCreateMyPeer(callId)
       setMyPeer(createdPeer)
 
       const myStream = await getMediaStream()
