@@ -48,8 +48,9 @@ export async function getMediaStream() {
         ideal: 30,
         max: 60
       },
-      facingMode: "environment"
+      facingMode: "user"
     },
+    audio: true
   })
 
   return mediaStream
