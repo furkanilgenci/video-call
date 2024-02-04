@@ -1,48 +1,48 @@
-import { useParams } from "react-router";
-import { getOrCreateMyPeer, getMediaStream, isHost, getHostId } from "../../services/peerjs";
-import React from "react";
-import Peer from "peerjs";
-import VideoElement from "./_components/video-element";
+import { useParams } from "react-router"
+import { getOrCreateMyPeer, getMediaStream, isHost, getHostId } from "../../services/peerjs"
+import React from "react"
+import Peer from "peerjs"
+import VideoElement from "./_components/video-element"
 
 export default function Call() {
-  const { id } = useParams();
-  const myId = id;
-  const myVideoRef = React.useRef<HTMLVideoElement>(null);
-  const [myPeer, setMyPeer] = React.useState<Peer | null>(null);
-  const [connectedStreams, setConnectedStreams] = React.useState<MediaStream[]>([]);
+  const { id } = useParams()
+  const callId = id
+  const myVideoRef = React.useRef<HTMLVideoElement>(null)
+  const [myPeer, setMyPeer] = React.useState<Peer | null>(null)
+  const [connectedStreams, setConnectedStreams] = React.useState<MediaStream[]>([])
 
   React.useEffect(() => {
     (async () => {
-      if (!myId) {
-        throw new Error("No id");
+      if (!callId) {
+        throw new Error("No id")
       }
 
       console.log('getting peer')
-      const createdPeer = await getOrCreateMyPeer(myId);
-      setMyPeer(createdPeer);
+      const createdPeer = await getOrCreateMyPeer(callId)
+      setMyPeer(createdPeer)
 
-      const myStream = await getMediaStream();
+      const myStream = await getMediaStream()
       if (myVideoRef.current) {
-        myVideoRef.current.srcObject = myStream;
+        myVideoRef.current.srcObject = myStream
       }
 
       createdPeer.on("call", (call) => {
-        console.log("Got call");
-        call.answer(myStream);
+        console.log("Got call")
+        call.answer(myStream)
         call.on("stream", (otherStream) => {
-        setConnectedStreams(current => [...current, otherStream])
-        });
-      });
+          setConnectedStreams(current => [...current, otherStream])
+        })
+      })
 
-      if(!isHost(myId)) {
+      if (!isHost(createdPeer.id)) {
         setTimeout(() => {
-          const userToCall = getHostId(myId);
-          console.log('calling', userToCall , myStream)
-          const call = createdPeer!.call(userToCall, myStream);
+          const userToCall = getHostId(createdPeer.id)
+          console.log('calling', userToCall, myStream)
+          const call = createdPeer!.call(userToCall, myStream)
           call.on("stream", (otherStream) => {
             setConnectedStreams(current => [...current, otherStream])
           }
-        );
+          )
         }, 2000)
       }
     })()
@@ -60,5 +60,5 @@ export default function Call() {
         ))}
       </div>
     </div>
-  );
+  )
 }

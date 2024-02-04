@@ -1,10 +1,10 @@
 import {
   createBrowserRouter,
   RouterProvider,
-} from "react-router-dom";
+} from "react-router-dom"
 import './App.css'
-import Home from "./routes";
-import Call from "./routes/call";
+import Home from "./routes"
+import Call from "./routes/call"
 
 const router = createBrowserRouter([
   {
@@ -15,7 +15,7 @@ const router = createBrowserRouter([
     path: "/:id",
     element: <Call />,
   }
-]);
+])
 
 function App() {
   return (
