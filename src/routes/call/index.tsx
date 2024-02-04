@@ -44,12 +44,36 @@ export default function Call() {
     })()
   }, [])
 
+  const handleMicrophone = () => {
+    const videoRef = myVideoRef.current
+    if (videoRef && videoRef.srcObject instanceof MediaStream) {
+      const tracks = videoRef.srcObject.getAudioTracks()
+      tracks.forEach(track => {
+        track.enabled = !track.enabled
+      })
+    }
+  }
+
+  const handleVideo = () => {
+    const videoRef = myVideoRef.current
+    if (videoRef && videoRef.srcObject instanceof MediaStream) {
+      const tracks = videoRef.srcObject.getVideoTracks()
+      tracks.forEach(track => {
+        track.enabled = !track.enabled
+      })
+    }
+  }
+
   return (
     <div>
       <h1 className="video-page-title">Here is call the call, I am {myPeer?.id}.</h1>
       <div className="video-page-container">
         <div className="video-element-container">
           <video ref={myVideoRef} width="100%" height="100%" autoPlay muted playsInline />
+          <div style={{ display: "flex", flexDirection: "row", justifyContent: "space-between", width: "100%" }}>
+            <button onClick={handleMicrophone}>On/Off Microphone</button>
+            <button onClick={handleVideo}>On/Off Video</button>
+          </div>
         </div>
         {
           connectedStreams.filter((_, i) => {
