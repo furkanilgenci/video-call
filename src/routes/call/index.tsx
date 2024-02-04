@@ -17,7 +17,6 @@ export default function Call() {
         throw new Error("No id")
       }
 
-      console.log('getting peer')
       const createdPeer = await getOrCreateMyPeer(callId)
       setMyPeer(createdPeer)
 
@@ -27,7 +26,6 @@ export default function Call() {
       }
 
       createdPeer.on("call", (call) => {
-        console.log("Got call")
         call.answer(myStream)
         call.on("stream", (otherStream) => {
           setConnectedStreams(current => [...current, otherStream])
@@ -37,12 +35,10 @@ export default function Call() {
       if (!isHost(createdPeer.id)) {
         setTimeout(() => {
           const userToCall = getHostId(createdPeer.id)
-          console.log('calling', userToCall, myStream)
           const call = createdPeer!.call(userToCall, myStream)
           call.on("stream", (otherStream) => {
             setConnectedStreams(current => [...current, otherStream])
-          }
-          )
+          })
         }, 2000)
       }
     })()
