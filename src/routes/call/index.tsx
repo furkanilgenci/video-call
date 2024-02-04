@@ -51,9 +51,15 @@ export default function Call() {
         <div className="video-element-container">
           <video ref={myVideoRef} width="100%" height="100%" autoPlay muted playsInline />
         </div>
-        {connectedStreams.map((stream, index) => (
-          <VideoElement key={index} stream={stream} />
-        ))}
+        {
+          connectedStreams.filter((_, i) => {
+            if (connectedStreams[i]?.id != connectedStreams[i + 1]?.id) {
+              return true
+            }
+          }).map((stream, index) => (
+            <VideoElement key={index} stream={stream} />
+          ))
+        }
       </div>
     </div>
   )
