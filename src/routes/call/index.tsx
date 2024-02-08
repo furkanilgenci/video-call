@@ -4,12 +4,15 @@ import React from "react"
 import Peer from "peerjs"
 import VideoElement from "./_components/video-element"
 
+import type { MediaConnection } from "peerjs"
+
 export default function Call() {
   const { id } = useParams()
   const callId = id
   const myVideoRef = React.useRef<HTMLVideoElement>(null)
   const [myPeer, setMyPeer] = React.useState<Peer | null>(null)
   const [connectedStreams, setConnectedStreams] = React.useState<MediaStream[]>([])
+  const [activeConnections, setActiveConnections] = React.useState<MediaConnection[]>([])
 
   React.useEffect(() => {
     (async () => {
@@ -40,6 +43,8 @@ export default function Call() {
             conn.send(usersCount)
           })
         }
+
+        setActiveConnections(current => [...current, call])
       })
 
       if (!isHost(createdPeer.id)) {
@@ -49,6 +54,8 @@ export default function Call() {
           call.on("stream", (otherStream) => {
             setConnectedStreams(current => [...current, otherStream])
           })
+
+          setActiveConnections(current => [...current, call])
         }, 2000)
 
         createdPeer.on("connection", (conn) => {
@@ -64,6 +71,8 @@ export default function Call() {
                 call.on("stream", (otherStream) => {
                   setConnectedStreams(current => [...current, otherStream])
                 })
+
+                setActiveConnections(current => [...current, call])
               }, 2000)
             }
           })
@@ -92,6 +101,12 @@ export default function Call() {
     }
   }
 
+  const handleClose = (stream: MediaStream) => {
+    activeConnections.filter(call => call.remoteStream?.id === stream.id).forEach(call => call.close())
+    const newConnectedStreams = connectedStreams.filter(s => s.id !== stream.id)
+    setConnectedStreams(newConnectedStreams)
+  }
+
   return (
     <div>
       <h1 className="video-page-title">Here is call the call, I am {myPeer?.id}.</h1>
@@ -109,7 +124,10 @@ export default function Call() {
               return true
             }
           }).map((stream, index) => (
-            <VideoElement key={index} stream={stream} />
+            <>
+              <VideoElement key={index} stream={stream} />
+              <button onClick={() => handleClose(stream)}>Close</button>
+            </>
           ))
         }
       </div>
