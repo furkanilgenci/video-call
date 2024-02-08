@@ -25,11 +25,21 @@ export default function Call() {
         myVideoRef.current.srcObject = myStream
       }
 
+      let usersCount = 0
       createdPeer.on("call", (call) => {
         call.answer(myStream)
         call.on("stream", (otherStream) => {
           setConnectedStreams(current => [...current, otherStream])
         })
+
+        // if host, send how many people are connected to the call
+        if (isHost(createdPeer.id)) {
+          usersCount++
+          const conn = createdPeer.connect(call.peer)
+          conn.on("open", () => {
+            conn.send(usersCount)
+          })
+        }
       })
 
       if (!isHost(createdPeer.id)) {
