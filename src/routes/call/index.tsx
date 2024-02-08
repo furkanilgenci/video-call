@@ -17,7 +17,6 @@ export default function Call() {
         throw new Error("No id")
       }
 
-      console.log('getting peer')
       const createdPeer = await getOrCreateMyPeer(callId)
       setMyPeer(createdPeer)
 
@@ -27,7 +26,6 @@ export default function Call() {
       }
 
       createdPeer.on("call", (call) => {
-        console.log("Got call")
         call.answer(myStream)
         call.on("stream", (otherStream) => {
           setConnectedStreams(current => [...current, otherStream])
@@ -37,16 +35,34 @@ export default function Call() {
       if (!isHost(createdPeer.id)) {
         setTimeout(() => {
           const userToCall = getHostId(createdPeer.id)
-          console.log('calling', userToCall, myStream)
           const call = createdPeer!.call(userToCall, myStream)
           call.on("stream", (otherStream) => {
             setConnectedStreams(current => [...current, otherStream])
-          }
-          )
+          })
         }, 2000)
       }
     })()
   }, [])
+
+  const handleMicrophone = () => {
+    const videoRef = myVideoRef.current
+    if (videoRef && videoRef.srcObject instanceof MediaStream) {
+      const tracks = videoRef.srcObject.getAudioTracks()
+      tracks.forEach(track => {
+        track.enabled = !track.enabled
+      })
+    }
+  }
+
+  const handleVideo = () => {
+    const videoRef = myVideoRef.current
+    if (videoRef && videoRef.srcObject instanceof MediaStream) {
+      const tracks = videoRef.srcObject.getVideoTracks()
+      tracks.forEach(track => {
+        track.enabled = !track.enabled
+      })
+    }
+  }
 
   return (
     <div>
@@ -54,10 +70,20 @@ export default function Call() {
       <div className="video-page-container">
         <div className="video-element-container">
           <video ref={myVideoRef} width="100%" height="100%" autoPlay muted playsInline />
+          <div style={{ display: "flex", flexDirection: "row", justifyContent: "space-between", width: "100%" }}>
+            <button onClick={handleMicrophone}>On/Off Microphone</button>
+            <button onClick={handleVideo}>On/Off Video</button>
+          </div>
         </div>
-        {connectedStreams.map((stream, index) => (
-          <VideoElement key={index} stream={stream} />
-        ))}
+        {
+          connectedStreams.filter((_, i) => {
+            if (connectedStreams[i]?.id != connectedStreams[i + 1]?.id) {
+              return true
+            }
+          }).map((stream, index) => (
+            <VideoElement key={index} stream={stream} />
+          ))
+        }
       </div>
     </div>
   )
