@@ -50,6 +50,24 @@ export default function Call() {
             setConnectedStreams(current => [...current, otherStream])
           })
         }, 2000)
+
+        createdPeer.on("connection", (conn) => {
+          let usersCount = 0
+          conn.on("data", (data) => {
+            usersCount = data as number
+
+            // After receiving the number of users, call the rest of the users
+            for (let i = 1; i < usersCount; i++) {
+              setTimeout(() => {
+                const userToCall = `${callId}-${i}`
+                const call = createdPeer!.call(userToCall, myStream)
+                call.on("stream", (otherStream) => {
+                  setConnectedStreams(current => [...current, otherStream])
+                })
+              }, 2000)
+            }
+          })
+        })
       }
     })()
   }, [])
