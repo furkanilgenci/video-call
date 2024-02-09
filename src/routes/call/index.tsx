@@ -3,12 +3,15 @@ import { getOrCreateMyPeer, getMediaStream, isHost, getHostId } from "../../serv
 import React from "react"
 import Peer from "peerjs"
 import VideoElement from "./_components/video-element"
+import { useState } from "react"
 
 export default function Call() {
   const { id } = useParams()
   const callId = id
   const myVideoRef = React.useRef<HTMLVideoElement>(null)
   const [myPeer, setMyPeer] = React.useState<Peer | null>(null)
+  const [videoStatus, setVideoStatus] = useState(true)
+  const [micStatus, setMicStatus] = useState(true)
   const [connectedStreams, setConnectedStreams] = React.useState<MediaStream[]>([])
 
   React.useEffect(() => {
@@ -64,16 +67,34 @@ export default function Call() {
     }
   }
 
+  const video = () => {
+    setVideoStatus(!videoStatus)
+   }
+  const mic = () => {
+    setMicStatus(!micStatus)
+    }
+
   return (
     <div>
-      <h1 className="video-page-title">Here is call the call, I am {myPeer?.id}.</h1>
-      <div className="video-page-container">
-        <div className="video-element-container">
-          <video ref={myVideoRef} width="100%" height="100%" autoPlay muted playsInline />
-          <div style={{ display: "flex", flexDirection: "row", justifyContent: "space-between", width: "100%" }}>
-            <button onClick={handleMicrophone}>On/Off Microphone</button>
-            <button onClick={handleVideo}>On/Off Video</button>
+      
+      <div className="flex grid font-mono h-max ontent-center p-20  ">
+      <h1 className=" h2 text-center text-2xl m-2">Here is call the call, I am {myPeer?.id}.</h1>
+        <div className="grid xl:grid-cols-2 sm:grid-cols-1 gap-6 p-5  grow">
+
+          
+        
+          <div className="w-full aspect-video  ">
+            <video className="  border-solid border-2  rounded-xl shadow-md w-full  aspect-auto object-contain " ref={myVideoRef} autoPlay muted playsInline />
+            <div className="flex justify-around">
+            <button className=" bg-gray-50 hover:bg-gray-100 active:bg-gray-200  rounded-md shadow-md cursor-pointer m-2 w-1/4"  onClick={handleMicrophone, mic}>{micStatus ? 'Mic On' : 'Mic Off'}</button>
+            <button  className="bg-gray-50 hover:bg-gray-100 active:bg-gray-200 rounded-md shadow-md cursor-pointer m-2 w-1/4" onClick={handleVideo, video}>{videoStatus ? 'Video On' : 'Video Off'}</button>
+          
+               </div>
           </div>
+        
+        
+      
+     
         </div>
         {
           connectedStreams.filter((_, i) => {
