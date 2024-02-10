@@ -51,6 +51,7 @@ export default function Call() {
     const videoRef = myVideoRef.current
     if (videoRef && videoRef.srcObject instanceof MediaStream) {
       const tracks = videoRef.srcObject.getAudioTracks()
+      setMicStatus(!micStatus)
       tracks.forEach(track => {
         track.enabled = !track.enabled
       })
@@ -61,18 +62,14 @@ export default function Call() {
     const videoRef = myVideoRef.current
     if (videoRef && videoRef.srcObject instanceof MediaStream) {
       const tracks = videoRef.srcObject.getVideoTracks()
+      setVideoStatus(!videoStatus)
       tracks.forEach(track => {
         track.enabled = !track.enabled
       })
     }
   }
 
-  const video = () => {
-    setVideoStatus(!videoStatus)
-   }
-  const mic = () => {
-    setMicStatus(!micStatus)
-    }
+
 
   return (
     <div>
@@ -83,11 +80,36 @@ export default function Call() {
 
           
         
+         
           <div className="w-full aspect-video  ">
             <video className="  border-solid border-2  rounded-xl shadow-md w-full  aspect-auto object-contain " ref={myVideoRef} autoPlay muted playsInline />
             <div className="flex justify-around">
-            <button className=" bg-gray-50 hover:bg-gray-100 active:bg-gray-200  rounded-md shadow-md cursor-pointer m-2 w-1/4"  onClick={handleMicrophone, mic}>{micStatus ? 'Mic On' : 'Mic Off'}</button>
-            <button  className="bg-gray-50 hover:bg-gray-100 active:bg-gray-200 rounded-md shadow-md cursor-pointer m-2 w-1/4" onClick={handleVideo, video}>{videoStatus ? 'Video On' : 'Video Off'}</button>
+            <button className=" bg-gray-50 hover:bg-gray-100 active:bg-gray-200  rounded-md shadow-md cursor-pointer m-2 w-1/4"  onClick={handleMicrophone}>{micStatus ? 'Mic On' : 'Mic Off'}</button>
+            <button  className="bg-gray-50 hover:bg-gray-100 active:bg-gray-200 rounded-md shadow-md cursor-pointer m-2 w-1/4" onClick={handleVideo}>{videoStatus ? 'Video On' : 'Video Off'}</button>
+          
+               </div>
+          </div>
+          <div className="w-full aspect-video  ">
+            <video className="  border-solid border-2  rounded-xl shadow-md w-full  aspect-auto object-contain " ref={myVideoRef} autoPlay muted playsInline />
+            <div className="flex justify-around">
+            <button className=" bg-gray-50 hover:bg-gray-100 active:bg-gray-200  rounded-md shadow-md cursor-pointer m-2 w-1/4"  onClick={handleMicrophone}>{micStatus ? 'Mic On' : 'Mic Off'}</button>
+            <button  className="bg-gray-50 hover:bg-gray-100 active:bg-gray-200 rounded-md shadow-md cursor-pointer m-2 w-1/4" onClick={handleVideo}>{videoStatus ? 'Video On' : 'Video Off'}</button>
+          
+               </div>
+          </div>
+          <div className="w-full aspect-video  ">
+            <video className="  border-solid border-2  rounded-xl shadow-md w-full  aspect-auto object-contain " ref={myVideoRef} autoPlay muted playsInline />
+            <div className="flex justify-around">
+            <button className=" bg-gray-50 hover:bg-gray-100 active:bg-gray-200  rounded-md shadow-md cursor-pointer m-2 w-1/4"  onClick={handleMicrophone}>{micStatus ? 'Mic On' : 'Mic Off'}</button>
+            <button  className="bg-gray-50 hover:bg-gray-100 active:bg-gray-200 rounded-md shadow-md cursor-pointer m-2 w-1/4" onClick={handleVideo}>{videoStatus ? 'Video On' : 'Video Off'}</button>
+          
+               </div>
+          </div>
+          <div className="w-full aspect-video  ">
+            <video className="  border-solid border-2  rounded-xl shadow-md w-full  aspect-auto object-contain " ref={myVideoRef} autoPlay muted playsInline />
+            <div className="flex justify-around">
+            <button className=" bg-gray-50 hover:bg-gray-100 active:bg-gray-200  rounded-md shadow-md cursor-pointer m-2 w-1/4"  onClick={handleMicrophone}>{micStatus ? 'Mic On' : 'Mic Off'}</button>
+            <button  className="bg-gray-50 hover:bg-gray-100 active:bg-gray-200 rounded-md shadow-md cursor-pointer m-2 w-1/4" onClick={handleVideo}>{videoStatus ? 'Video On' : 'Video Off'}</button>
           
                </div>
           </div>
