@@ -10,6 +10,8 @@ import Peer from "peerjs";
 import VideoElement from "./_components/video-element";
 import { useState } from "react";
 
+import type { MediaConnection } from "peerjs";
+
 export default function Call() {
   const { id } = useParams();
   const callId = id;
@@ -20,6 +22,9 @@ export default function Call() {
   const [connectedStreams, setConnectedStreams] = React.useState<MediaStream[]>(
     []
   );
+  const [activeConnections, setActiveConnections] = React.useState<
+    MediaConnection[]
+  >([]);
 
   React.useEffect(() => {
     (async () => {
@@ -35,11 +40,23 @@ export default function Call() {
         myVideoRef.current.srcObject = myStream;
       }
 
+      let usersCount = 0;
       createdPeer.on("call", (call) => {
         call.answer(myStream);
         call.on("stream", (otherStream) => {
           setConnectedStreams((current) => [...current, otherStream]);
         });
+
+        // if host, send how many people are connected to the call
+        if (isHost(createdPeer.id)) {
+          usersCount++;
+          const conn = createdPeer.connect(call.peer);
+          conn.on("open", () => {
+            conn.send(usersCount);
+          });
+        }
+
+        setActiveConnections((current) => [...current, call]);
       });
 
       if (!isHost(createdPeer.id)) {
@@ -49,7 +66,29 @@ export default function Call() {
           call.on("stream", (otherStream) => {
             setConnectedStreams((current) => [...current, otherStream]);
           });
+
+          setActiveConnections((current) => [...current, call]);
         }, 2000);
+
+        createdPeer.on("connection", (conn) => {
+          let usersCount = 0;
+          conn.on("data", (data) => {
+            usersCount = data as number;
+
+            // After receiving the number of users, call the rest of the users
+            for (let i = 1; i < usersCount; i++) {
+              setTimeout(() => {
+                const userToCall = `${callId}-${i}`;
+                const call = createdPeer!.call(userToCall, myStream);
+                call.on("stream", (otherStream) => {
+                  setConnectedStreams((current) => [...current, otherStream]);
+                });
+
+                setActiveConnections((current) => [...current, call]);
+              }, 2000);
+            }
+          });
+        });
       }
     })();
   }, []);
@@ -74,6 +113,16 @@ export default function Call() {
         track.enabled = !track.enabled;
       });
     }
+  };
+
+  const handleClose = (stream: MediaStream) => {
+    activeConnections
+      .filter((call) => call.remoteStream?.id === stream.id)
+      .forEach((call) => call.close());
+    const newConnectedStreams = connectedStreams.filter(
+      (s) => s.id !== stream.id
+    );
+    setConnectedStreams(newConnectedStreams);
   };
 
   return (
@@ -114,7 +163,10 @@ export default function Call() {
             }
           })
           .map((stream, index) => (
-            <VideoElement key={index} stream={stream} />
+            <>
+              <VideoElement key={index} stream={stream} />
+              <button onClick={() => handleClose(stream)}>Close</button>
+            </>
           ))}
       </div>
     </div>

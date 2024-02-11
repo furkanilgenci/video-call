@@ -15,7 +15,7 @@ export default function VideoElement({ stream }: PropsType) {
 
   return (
     <div className="video-element-container">
-      <video ref={myVideoRef} width="100%" height="100%" autoPlay />
+      <video ref={myVideoRef} width="100%" height="100%" autoPlay playsInline />
     </div>
   )
 }
