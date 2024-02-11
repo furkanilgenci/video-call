@@ -1,21 +1,31 @@
 import React from "react"
 
 type PropsType = {
-  stream: MediaStream
+  videoRef?: React.RefObject<HTMLVideoElement>
+  stream?: MediaStream
 }
-export default function VideoElement({ stream }: PropsType) {
-  const myVideoRef = React.useRef<HTMLVideoElement>(null)
+export default function VideoElement({ stream, videoRef: videoRefProp }: PropsType) {
+  const internalVideoRef = React.useRef<HTMLVideoElement>(null)
+  const videoRef = videoRefProp || internalVideoRef
 
   React.useEffect(() => {
-    if (myVideoRef.current) {
-      myVideoRef.current.srcObject = stream
+    if(videoRefProp) return;
+
+    if (internalVideoRef.current && stream) {
+      internalVideoRef.current.srcObject = stream
     }
   }, [stream])
 
 
   return (
-    <div className="video-element-container">
-      <video ref={myVideoRef} width="100%" height="100%" autoPlay playsInline />
+      <div className="w-full aspect-video  ">
+        <video
+          className="  border-solid border-2  rounded-xl shadow-md w-full  aspect-auto object-contain "
+          ref={videoRef}
+          autoPlay
+          muted
+          playsInline
+        />
     </div>
   )
 }
