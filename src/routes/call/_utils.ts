@@ -1,4 +1,4 @@
-import type { MediaConnection } from "peerjs";
+import type { MediaConnection, Peer } from "peerjs";
 import { isHost } from "../../services/peerjs";
 
 export type ParticipantType = {
@@ -24,6 +24,17 @@ export function addParticipant(
   });
 }
 
+export function removeParticipant(
+  setState: React.Dispatch<React.SetStateAction<ParticipantType[]>>,
+  peerId: string,
+) {
+  setState((current) => {
+    return current.filter(
+      (participant) => participant.mediaConnection.peer !== peerId,
+    );
+  });
+}
+
 export function handleHeartbeat(
   setState: React.Dispatch<React.SetStateAction<ParticipantType[]>>,
   mediaConnection: MediaConnection,
@@ -39,6 +50,27 @@ export function handleHeartbeat(
       return p;
     });
   });
+}
+
+export function handleNotifyConnectedParticipants(
+  myPeerId: string,
+  peerIds: string[],
+  participants: ParticipantType[],
+) {
+  const peerIdsToCall = peerIds.filter(
+    (peerId) =>
+      peerId !== myPeerId &&
+      !participants.some(
+        (participant) => participant.mediaConnection.peer === peerId,
+      ),
+  );
+  const participantsToDisconnect = participants.filter(
+    (participant) =>
+      !peerIds.includes(participant.mediaConnection.peer) &&
+      !isHost(participant.mediaConnection.peer),
+  );
+
+  return { peerIdsToCall, participantsToDisconnect };
 }
 
 export function removeInactiveParticipants(

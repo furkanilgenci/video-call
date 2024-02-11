@@ -13,15 +13,32 @@ import {
   ParticipantType,
   addParticipant,
   handleHeartbeat,
+  handleNotifyConnectedParticipants,
   removeInactiveParticipants,
+  removeParticipant,
 } from "./_utils";
+import { create as createStore } from "zustand";
+
+const participantsStore = createStore<{
+  participants: ParticipantType[];
+  setParticipants: React.Dispatch<React.SetStateAction<ParticipantType[]>>;
+}>((set) => ({
+  participants: [],
+  setParticipants: (arg: any) =>
+    set((state) => {
+      if (arg instanceof Function) {
+        return { participants: arg(state.participants) };
+      }
+      return { participants: arg };
+    }),
+}));
 
 export default function Call() {
   const myVideoRef = React.useRef<HTMLVideoElement>(null);
   const [myPeer, setMyPeer] = React.useState<Peer | null>(null);
   const [videoStatus, setVideoStatus] = useState(true);
   const [micStatus, setMicStatus] = useState(true);
-  const [participants, setParticipants] = React.useState<ParticipantType[]>([]);
+  const { participants, setParticipants } = participantsStore();
   const { callId } = useParams();
 
   React.useEffect(() => {
@@ -49,7 +66,6 @@ export default function Call() {
         myVideoRef.current.srcObject = myMediaStream;
       }
 
-      let usersCount = 0;
       createdPeer.on("call", (call) => {
         call.answer(myMediaStream);
         call.on("stream", (mediaStream) => {
@@ -59,16 +75,22 @@ export default function Call() {
           });
         });
 
-        // if host, send how many people are connected to the call
         if (isHost()) {
-          usersCount++;
           const conn = createdPeer.connect(call.peer);
           conn.on("open", () => {
-            conn.send(usersCount);
+            setInterval(() => {
+              conn.send({
+                type: "notify-connected-partcipants",
+                peerIds: participantsStore
+                  .getState()
+                  .participants.map((p) => p.mediaConnection.peer),
+              });
+            }, 1000);
           });
 
           conn.on("data", (data) => {
-            if (data === "heartbeat") {
+            // @ts-ignore
+            if (data?.type === "heartbeat") {
               handleHeartbeat(setParticipants, call);
             }
           });
@@ -88,28 +110,40 @@ export default function Call() {
         }, 2000);
 
         createdPeer.on("connection", (conn) => {
-          let usersCount = 0;
           conn.on("data", (data) => {
-            usersCount = data as number;
+            // @ts-ignore
+            if (data?.type === "notify-connected-partcipants") {
+              const { peerIdsToCall, participantsToDisconnect } =
+                handleNotifyConnectedParticipants(
+                  createdPeer.id,
+                  // @ts-ignore
+                  data.peerIds,
+                  participantsStore.getState().participants,
+                );
 
-            // After receiving the number of users, call the rest of the users
-            for (let i = 1; i < usersCount; i++) {
-              setTimeout(() => {
-                const userToCall = `${callId}-${i}`;
-                const call = createdPeer!.call(userToCall, myMediaStream);
+              peerIdsToCall.forEach((peerId) => {
+                const call = createdPeer!.call(peerId, myMediaStream);
                 call.on("stream", (mediaStream) => {
                   addParticipant(setParticipants, {
                     mediaConnection: call,
                     mediaStream: mediaStream,
                   });
                 });
-              }, 2000);
+              });
+
+              participantsToDisconnect.forEach((participant) => {
+                removeParticipant(
+                  setParticipants,
+                  participant.mediaConnection.peer,
+                );
+                participant.mediaConnection.close();
+              });
             }
           });
 
           setInterval(() => {
-            conn.send("heartbeat");
-          }, 1000);
+            conn.send({ type: "heartbeat" });
+          }, 500);
         });
       }
     })();

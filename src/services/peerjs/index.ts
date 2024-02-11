@@ -73,11 +73,11 @@ export function getHostId() {
   return id.split("-")[0] + "-0";
 }
 
-export function isHost() {
+export function isHost(peerId?: string) {
   if (!myPeer) {
     throw new Error("Peer is not initialized");
   }
-  const id = myPeer.id;
+  const id = peerId || myPeer.id;
 
   return id.endsWith("-0");
 }
