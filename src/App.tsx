@@ -1,10 +1,7 @@
-import {
-  createBrowserRouter,
-  RouterProvider,
-} from "react-router-dom"
-import './App.css'
-import Home from "./routes"
-import Call from "./routes/call"
+import { createBrowserRouter, RouterProvider } from "react-router-dom";
+import "./App.css";
+import Home from "./routes";
+import Call from "./routes/call";
 
 const router = createBrowserRouter([
   {
@@ -12,15 +9,13 @@ const router = createBrowserRouter([
     element: <Home />,
   },
   {
-    path: "/:id",
+    path: "/:callId",
     element: <Call />,
-  }
-])
+  },
+]);
 
 function App() {
-  return (
-    <RouterProvider router={router} />
-  )
+  return <RouterProvider router={router} />;
 }
 
-export default App
+export default App;

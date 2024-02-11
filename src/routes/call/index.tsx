@@ -1,45 +1,23 @@
 import { useParams } from "react-router";
 import {
   getOrCreateMyPeer,
-  getMediaStream,
+  getMyMediaStream,
   isHost,
   getHostId,
 } from "../../services/peerjs";
 import React from "react";
-import Peer, { MediaConnection } from "peerjs";
+import Peer from "peerjs";
 import VideoElement from "./_components/video-element";
 import { useState } from "react";
-
-function addParticipant(
-  setState: React.Dispatch<React.SetStateAction<ParticipantType[]>>,
-  newParticipant: ParticipantType,
-) {
-  setState((current) => {
-    if (
-      current.some(
-        (participant) =>
-          participant.mediaStream.id === newParticipant.mediaStream.id,
-      )
-    ) {
-      return current;
-    }
-    return [...current, newParticipant];
-  });
-}
-
-type ParticipantType = {
-  mediaConnection: MediaConnection;
-  mediaStream: MediaStream;
-};
+import { ParticipantType, addParticipant } from "./_utils";
 
 export default function Call() {
-  const { id } = useParams();
-  const callId = id;
   const myVideoRef = React.useRef<HTMLVideoElement>(null);
   const [myPeer, setMyPeer] = React.useState<Peer | null>(null);
   const [videoStatus, setVideoStatus] = useState(true);
   const [micStatus, setMicStatus] = useState(true);
   const [participants, setParticipants] = React.useState<ParticipantType[]>([]);
+  const { callId } = useParams();
 
   React.useEffect(() => {
     (async () => {
@@ -52,14 +30,14 @@ export default function Call() {
       const createdPeer = await getOrCreateMyPeer(callId);
       setMyPeer(createdPeer);
 
-      const myStream = await getMediaStream();
+      const myMediaStream = await getMyMediaStream();
       if (myVideoRef.current) {
-        myVideoRef.current.srcObject = myStream;
+        myVideoRef.current.srcObject = myMediaStream;
       }
 
       let usersCount = 0;
       createdPeer.on("call", (call) => {
-        call.answer(myStream);
+        call.answer(myMediaStream);
         call.on("stream", (mediaStream) => {
           addParticipant(setParticipants, {
             mediaConnection: call,
@@ -68,7 +46,7 @@ export default function Call() {
         });
 
         // if host, send how many people are connected to the call
-        if (isHost(createdPeer.id)) {
+        if (isHost()) {
           usersCount++;
           const conn = createdPeer.connect(call.peer);
           conn.on("open", () => {
@@ -77,10 +55,10 @@ export default function Call() {
         }
       });
 
-      if (!isHost(createdPeer.id)) {
+      if (!isHost()) {
         setTimeout(() => {
-          const userToCall = getHostId(createdPeer.id);
-          const call = createdPeer!.call(userToCall, myStream);
+          const userToCall = getHostId();
+          const call = createdPeer!.call(userToCall, myMediaStream);
           call.on("stream", (mediaStream) => {
             addParticipant(setParticipants, {
               mediaConnection: call,
@@ -98,7 +76,7 @@ export default function Call() {
             for (let i = 1; i < usersCount; i++) {
               setTimeout(() => {
                 const userToCall = `${callId}-${i}`;
-                const call = createdPeer!.call(userToCall, myStream);
+                const call = createdPeer!.call(userToCall, myMediaStream);
                 call.on("stream", (mediaStream) => {
                   addParticipant(setParticipants, {
                     mediaConnection: call,
