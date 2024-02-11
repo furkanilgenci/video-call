@@ -9,7 +9,12 @@ import React from "react";
 import Peer from "peerjs";
 import VideoElement from "./_components/video-element";
 import { useState } from "react";
-import { ParticipantType, addParticipant } from "./_utils";
+import {
+  ParticipantType,
+  addParticipant,
+  handleHeartbeat,
+  removeInactiveParticipants,
+} from "./_utils";
 
 export default function Call() {
   const myVideoRef = React.useRef<HTMLVideoElement>(null);
@@ -20,9 +25,18 @@ export default function Call() {
   const { callId } = useParams();
 
   React.useEffect(() => {
+    const interval = setInterval(
+      () => removeInactiveParticipants(setParticipants),
+      500,
+    );
+    return () => {
+      clearInterval(interval);
+    };
+  }, []);
+
+  React.useEffect(() => {
     (async () => {
       if (myPeer) return;
-
       if (!callId) {
         throw new Error("No id");
       }
@@ -51,6 +65,12 @@ export default function Call() {
           const conn = createdPeer.connect(call.peer);
           conn.on("open", () => {
             conn.send(usersCount);
+          });
+
+          conn.on("data", (data) => {
+            if (data === "heartbeat") {
+              handleHeartbeat(setParticipants, call);
+            }
           });
         }
       });
@@ -86,6 +106,10 @@ export default function Call() {
               }, 2000);
             }
           });
+
+          setInterval(() => {
+            conn.send("heartbeat");
+          }, 1000);
         });
       }
     })();
