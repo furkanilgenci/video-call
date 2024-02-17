@@ -1,4 +1,4 @@
-import React from "react"
+import React from "react";
 
 type PropsType = {
   isMe?: boolean;
@@ -10,15 +10,16 @@ export default function VideoElement({
   stream,
   videoRef: videoRefProp,
 }: PropsType) {
+  const internalVideoRef = React.useRef<HTMLVideoElement>(null);
+  const videoRef = videoRefProp || internalVideoRef;
 
   React.useEffect(() => {
-    if(videoRefProp) return;
+    if (videoRefProp) return;
 
     if (internalVideoRef.current && stream) {
-      internalVideoRef.current.srcObject = stream
+      internalVideoRef.current.srcObject = stream;
     }
-  }, [stream])
-
+  }, [stream]);
 
   return (
     <div className="w-full aspect-video  ">
@@ -30,6 +31,5 @@ export default function VideoElement({
         playsInline
       />
     </div>
-  )
+  );
 }
-

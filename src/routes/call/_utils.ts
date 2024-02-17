@@ -1,4 +1,4 @@
-import type { MediaConnection, Peer } from "peerjs";
+import type { MediaConnection } from "peerjs";
 import { isHost } from "../../services/peerjs";
 
 export type ParticipantType = {
