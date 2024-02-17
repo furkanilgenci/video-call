@@ -194,7 +194,7 @@ export default function Call() {
           </div>
         </div>
         <div className="grid xl:grid-cols-2 sm:grid-cols-1 gap-6 p-5  grow">
-          <VideoElement videoRef={myVideoRef} />
+          <VideoElement videoRef={myVideoRef} isMe />
           {...participants.map((participant, index) => (
             <VideoElement key={index} stream={participant.mediaStream} />
           ))}
