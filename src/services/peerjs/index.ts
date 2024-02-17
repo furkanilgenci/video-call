@@ -1,6 +1,7 @@
 import { Peer } from "peerjs";
 
 let myPeer: Peer;
+let myScreensharePeer: Peer;
 
 // Recursive promise 🤯
 export async function getOrCreateMyPeer(
@@ -47,6 +48,20 @@ export async function getOrCreateMyPeer(
   });
 }
 
+export function getOrCreateMyScreensharePeer() {
+  if (!myPeer) {
+    throw new Error("Peer is not initialized");
+  }
+  if (myScreensharePeer) {
+    return myScreensharePeer;
+  }
+
+  const id = myPeer.id + "-screenshare";
+  const myNewScreensharePeer = new Peer(id);
+
+  return myNewScreensharePeer;
+}
+
 export async function getMyMediaStream() {
   const mediaStream = await navigator.mediaDevices.getUserMedia({
     video: {
@@ -62,6 +77,15 @@ export async function getMyMediaStream() {
   });
 
   return mediaStream;
+}
+
+export async function getDisplayMediaStream() {
+  const displayMediaStream = navigator.mediaDevices.getDisplayMedia({
+    video: true,
+    audio: false,
+  });
+
+  return displayMediaStream;
 }
 
 export function getHostId() {

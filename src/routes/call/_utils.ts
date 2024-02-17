@@ -24,6 +24,23 @@ export function addParticipant(
   });
 }
 
+export function addScreenshareParticipant(
+  setState: React.Dispatch<React.SetStateAction<ParticipantType[]>>,
+  newParticipant: ParticipantType,
+) {
+  setState((current) => {
+    if (
+      current.some(
+        (participant) =>
+          participant.mediaStream.id === newParticipant.mediaStream.id,
+      )
+    ) {
+      return current;
+    }
+    return [...current, newParticipant];
+  });
+}
+
 export function removeParticipant(
   setState: React.Dispatch<React.SetStateAction<ParticipantType[]>>,
   peerId: string,

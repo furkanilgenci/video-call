@@ -4,6 +4,8 @@ import {
   getMyMediaStream,
   isHost,
   getHostId,
+  getDisplayMediaStream,
+  getOrCreateMyScreensharePeer,
 } from "../../services/peerjs";
 import React from "react";
 import Peer from "peerjs";
@@ -35,7 +37,11 @@ const participantsStore = createStore<{
 
 export default function Call() {
   const myVideoRef = React.useRef<HTMLVideoElement>(null);
+  const myScreenshareRef = React.useRef<HTMLVideoElement>(null);
   const [myPeer, setMyPeer] = React.useState<Peer | null>(null);
+  const [myScreensharePeer, setMyScreensharePeer] = React.useState<Peer | null>(
+    null,
+  );
   const [videoStatus, setVideoStatus] = useState(true);
   const [micStatus, setMicStatus] = useState(true);
   const { participants, setParticipants } = participantsStore();
@@ -171,6 +177,27 @@ export default function Call() {
     }
   };
 
+  const handleScreenshare = async () => {
+    if (myScreensharePeer) {
+      myScreensharePeer.disconnect();
+      setMyScreensharePeer(null);
+    } else {
+      const myScreensharePeer = getOrCreateMyScreensharePeer();
+      const myScreenshareMediaStream = await getDisplayMediaStream();
+      const userToCall = getHostId();
+
+      if (myScreenshareRef.current) {
+        myScreenshareRef.current.srcObject = myScreenshareMediaStream;
+      }
+
+      myScreensharePeer.call(userToCall, myScreenshareMediaStream, {
+        metadata: { type: "screenshare", ownerPeerId: myPeer!.id },
+      });
+
+      setMyScreensharePeer(myScreensharePeer);
+    }
+  };
+
   return (
     <div>
       <div className="flex grid font-mono h-max ontent-center p-20">
@@ -179,6 +206,12 @@ export default function Call() {
             Here is call the call, I am {myPeer?.id}.
           </h1>
           <div className="flex justify-around">
+            <button
+              className="bg-gray-50 hover:bg-gray-100 active:bg-gray-200  rounded-md shadow-md cursor-pointer m-2 w-1/4"
+              onClick={handleScreenshare}
+            >
+              {!myScreensharePeer ? "Screenshare on" : "Screenshare off"}
+            </button>
             <button
               className="bg-gray-50 hover:bg-gray-100 active:bg-gray-200  rounded-md shadow-md cursor-pointer m-2 w-1/4"
               onClick={handleMicrophone}
@@ -195,8 +228,17 @@ export default function Call() {
         </div>
         <div className="grid xl:grid-cols-2 sm:grid-cols-1 gap-6 p-5  grow">
           <VideoElement videoRef={myVideoRef} isMe />
+          {myScreensharePeer && (
+            <VideoElement videoRef={myScreenshareRef} isMe isScreenshare />
+          )}
           {...participants.map((participant, index) => (
-            <VideoElement key={index} stream={participant.mediaStream} />
+            <VideoElement
+              key={index}
+              stream={participant.mediaStream}
+              isScreenshare={
+                participant.mediaConnection.metadata?.type === "screenshare"
+              }
+            />
           ))}
         </div>
       </div>
