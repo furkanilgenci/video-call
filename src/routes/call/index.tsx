@@ -33,7 +33,7 @@ export default function Call() {
   useEffect(() => {
     const interval = setInterval(
       () => removeInactiveParticipants(setParticipants),
-      500,
+      500
     );
     return () => {
       clearInterval(interval);
@@ -78,7 +78,7 @@ export default function Call() {
           });
 
           conn.on("data", (data) => {
-            // @ts-ignore
+            // @ts-expect-error ts-2339
             if (data?.type === "heartbeat") {
               handleHeartbeat(setParticipants, call);
             }
@@ -100,12 +100,12 @@ export default function Call() {
 
         createdPeer.on("connection", (conn) => {
           conn.on("data", (data) => {
-            // @ts-ignore
+            // @ts-expect-error ts-2339
             if (data?.type === "notify-connected-partcipants") {
               const { peerIdsToCall, participantsToDisconnect } =
                 handleNotifyConnectedParticipants(
                   createdPeer.id,
-                  // @ts-ignore
+                  // @ts-expect-error ts-2339
                   data.peerIds,
                   participantsStore.getState().participants
                 );
