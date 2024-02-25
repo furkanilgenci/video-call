@@ -7,57 +7,40 @@ import {
   getDisplayMediaStream,
   getOrCreateMyScreensharePeer,
 } from "../../services/peerjs";
-import React from "react";
+import { useEffect, useRef } from "react";
 import Peer from "peerjs";
 import VideoElement from "./_components/video-element";
 import { useState } from "react";
 import {
-  ParticipantType,
   addParticipant,
   handleHeartbeat,
   handleNotifyConnectedParticipants,
   removeInactiveParticipants,
   removeParticipant,
 } from "./_utils";
-import { create as createStore } from "zustand";
-
-const participantsStore = createStore<{
-  participants: ParticipantType[];
-  setParticipants: React.Dispatch<React.SetStateAction<ParticipantType[]>>;
-}>((set) => ({
-  participants: [],
-  setParticipants: (arg: any) =>
-    set((state) => {
-      if (arg instanceof Function) {
-        return { participants: arg(state.participants) };
-      }
-      return { participants: arg };
-    }),
-}));
+import { participantsStore } from "../../store/participantsStore";
 
 export default function Call() {
-  const myVideoRef = React.useRef<HTMLVideoElement>(null);
-  const myScreenshareRef = React.useRef<HTMLVideoElement>(null);
-  const [myPeer, setMyPeer] = React.useState<Peer | null>(null);
-  const [myScreensharePeer, setMyScreensharePeer] = React.useState<Peer | null>(
-    null,
-  );
+  const myVideoRef = useRef<HTMLVideoElement>(null);
+  const myScreenshareRef = useRef<HTMLVideoElement>(null);
+  const [myPeer, setMyPeer] = useState<Peer | null>(null);
+  const [myScreensharePeer, setMyScreensharePeer] = useState<Peer | null>(null);
   const [videoStatus, setVideoStatus] = useState(true);
   const [micStatus, setMicStatus] = useState(true);
   const { participants, setParticipants } = participantsStore();
   const { callId } = useParams();
 
-  React.useEffect(() => {
+  useEffect(() => {
     const interval = setInterval(
       () => removeInactiveParticipants(setParticipants),
-      500,
+      500
     );
     return () => {
       clearInterval(interval);
     };
   }, []);
 
-  React.useEffect(() => {
+  useEffect(() => {
     (async () => {
       if (myPeer) return;
       if (!callId) {
@@ -95,7 +78,7 @@ export default function Call() {
           });
 
           conn.on("data", (data) => {
-            // @ts-ignore
+            // @ts-expect-error ts-2339
             if (data?.type === "heartbeat") {
               handleHeartbeat(setParticipants, call);
             }
@@ -117,14 +100,14 @@ export default function Call() {
 
         createdPeer.on("connection", (conn) => {
           conn.on("data", (data) => {
-            // @ts-ignore
+            // @ts-expect-error ts-2339
             if (data?.type === "notify-connected-partcipants") {
               const { peerIdsToCall, participantsToDisconnect } =
                 handleNotifyConnectedParticipants(
                   createdPeer.id,
-                  // @ts-ignore
+                  // @ts-expect-error ts-2339
                   data.peerIds,
-                  participantsStore.getState().participants,
+                  participantsStore.getState().participants
                 );
 
               peerIdsToCall.forEach((peerId) => {
@@ -140,7 +123,7 @@ export default function Call() {
               participantsToDisconnect.forEach((participant) => {
                 removeParticipant(
                   setParticipants,
-                  participant.mediaConnection.peer,
+                  participant.mediaConnection.peer
                 );
                 participant.mediaConnection.close();
               });
