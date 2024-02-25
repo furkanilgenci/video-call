@@ -2,7 +2,6 @@ import { useParams } from "react-router";
 import {
   getOrCreateMyPeer,
   getMyMediaStream,
-  isHost,
   getHostId,
   getDisplayMediaStream,
   getOrCreateMyScreensharePeer,
@@ -11,14 +10,9 @@ import { useEffect, useRef } from "react";
 import Peer from "peerjs";
 import VideoElement from "./_components/video-element";
 import { useState } from "react";
-import {
-  addParticipant,
-  handleHeartbeat,
-  handleNotifyConnectedParticipants,
-  removeInactiveParticipants,
-  removeParticipant,
-} from "./_utils";
+import { getInactiveParticipants } from "./_utils";
 import { participantsStore } from "../../store/participantsStore";
+import initCall from "../../services/peerjs/initCall";
 
 export default function Call() {
   const myVideoRef = useRef<HTMLVideoElement>(null);
@@ -27,14 +21,21 @@ export default function Call() {
   const [myScreensharePeer, setMyScreensharePeer] = useState<Peer | null>(null);
   const [videoStatus, setVideoStatus] = useState(true);
   const [micStatus, setMicStatus] = useState(true);
-  const { participants, setParticipants } = participantsStore();
+  const {
+    participants,
+    updateLastHeartbeat,
+    addParticipant,
+    removeParticipant,
+  } = participantsStore();
   const { callId } = useParams();
 
   useEffect(() => {
-    const interval = setInterval(
-      () => removeInactiveParticipants(setParticipants),
-      500
-    );
+    const interval = setInterval(() => {
+      const participantsToRemove = getInactiveParticipants(participants);
+      participantsToRemove.forEach((p) => {
+        removeParticipant(p.mediaConnection.peer);
+      });
+    }, 500);
     return () => {
       clearInterval(interval);
     };
@@ -42,99 +43,25 @@ export default function Call() {
 
   useEffect(() => {
     (async () => {
-      if (myPeer) return;
       if (!callId) {
         throw new Error("No id");
       }
-
-      const createdPeer = await getOrCreateMyPeer(callId);
-      setMyPeer(createdPeer);
 
       const myMediaStream = await getMyMediaStream();
       if (myVideoRef.current) {
         myVideoRef.current.srcObject = myMediaStream;
       }
 
-      createdPeer.on("call", (call) => {
-        call.answer(myMediaStream);
-        call.on("stream", (mediaStream) => {
-          addParticipant(setParticipants, {
-            mediaConnection: call,
-            mediaStream: mediaStream,
-          });
-        });
-
-        if (isHost()) {
-          const conn = createdPeer.connect(call.peer);
-          conn.on("open", () => {
-            setInterval(() => {
-              conn.send({
-                type: "notify-connected-partcipants",
-                peerIds: participantsStore
-                  .getState()
-                  .participants.map((p) => p.mediaConnection.peer),
-              });
-            }, 1000);
-          });
-
-          conn.on("data", (data) => {
-            // @ts-expect-error ts-2339
-            if (data?.type === "heartbeat") {
-              handleHeartbeat(setParticipants, call);
-            }
-          });
-        }
+      const createdPeer = await getOrCreateMyPeer(callId);
+      setMyPeer(createdPeer);
+      initCall({
+        participantsStore: participantsStore,
+        myPeer: createdPeer,
+        myMediaStream,
+        addParticipant,
+        removeParticipant,
+        updateLastHeartbeat,
       });
-
-      if (!isHost()) {
-        setTimeout(() => {
-          const userToCall = getHostId();
-          const call = createdPeer!.call(userToCall, myMediaStream);
-          call.on("stream", (mediaStream) => {
-            addParticipant(setParticipants, {
-              mediaConnection: call,
-              mediaStream: mediaStream,
-            });
-          });
-        }, 2000);
-
-        createdPeer.on("connection", (conn) => {
-          conn.on("data", (data) => {
-            // @ts-expect-error ts-2339
-            if (data?.type === "notify-connected-partcipants") {
-              const { peerIdsToCall, participantsToDisconnect } =
-                handleNotifyConnectedParticipants(
-                  createdPeer.id,
-                  // @ts-expect-error ts-2339
-                  data.peerIds,
-                  participantsStore.getState().participants
-                );
-
-              peerIdsToCall.forEach((peerId) => {
-                const call = createdPeer!.call(peerId, myMediaStream);
-                call.on("stream", (mediaStream) => {
-                  addParticipant(setParticipants, {
-                    mediaConnection: call,
-                    mediaStream: mediaStream,
-                  });
-                });
-              });
-
-              participantsToDisconnect.forEach((participant) => {
-                removeParticipant(
-                  setParticipants,
-                  participant.mediaConnection.peer
-                );
-                participant.mediaConnection.close();
-              });
-            }
-          });
-
-          setInterval(() => {
-            conn.send({ type: "heartbeat" });
-          }, 500);
-        });
-      }
     })();
   }, []);
 
