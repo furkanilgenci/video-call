@@ -1,21 +1,16 @@
 import type { MediaConnection } from "peerjs";
 import { isHost } from "../../services/peerjs";
-
-export type ParticipantType = {
-  lastHeartbeat?: number;
-  mediaConnection: MediaConnection;
-  mediaStream: MediaStream;
-};
+import { ParticipantType } from "../../types";
 
 export function addParticipant(
   setState: React.Dispatch<React.SetStateAction<ParticipantType[]>>,
-  newParticipant: ParticipantType,
+  newParticipant: ParticipantType
 ) {
   setState((current) => {
     if (
       current.some(
         (participant) =>
-          participant.mediaStream.id === newParticipant.mediaStream.id,
+          participant.mediaStream.id === newParticipant.mediaStream.id
       )
     ) {
       return current;
@@ -26,13 +21,13 @@ export function addParticipant(
 
 export function addScreenshareParticipant(
   setState: React.Dispatch<React.SetStateAction<ParticipantType[]>>,
-  newParticipant: ParticipantType,
+  newParticipant: ParticipantType
 ) {
   setState((current) => {
     if (
       current.some(
         (participant) =>
-          participant.mediaStream.id === newParticipant.mediaStream.id,
+          participant.mediaStream.id === newParticipant.mediaStream.id
       )
     ) {
       return current;
@@ -43,18 +38,18 @@ export function addScreenshareParticipant(
 
 export function removeParticipant(
   setState: React.Dispatch<React.SetStateAction<ParticipantType[]>>,
-  peerId: string,
+  peerId: string
 ) {
   setState((current) => {
     return current.filter(
-      (participant) => participant.mediaConnection.peer !== peerId,
+      (participant) => participant.mediaConnection.peer !== peerId
     );
   });
 }
 
 export function handleHeartbeat(
   setState: React.Dispatch<React.SetStateAction<ParticipantType[]>>,
-  mediaConnection: MediaConnection,
+  mediaConnection: MediaConnection
 ) {
   setState((current) => {
     return current.map((p) => {
@@ -72,26 +67,26 @@ export function handleHeartbeat(
 export function handleNotifyConnectedParticipants(
   myPeerId: string,
   peerIds: string[],
-  participants: ParticipantType[],
+  participants: ParticipantType[]
 ) {
   const peerIdsToCall = peerIds.filter(
     (peerId) =>
       peerId !== myPeerId &&
       !participants.some(
-        (participant) => participant.mediaConnection.peer === peerId,
-      ),
+        (participant) => participant.mediaConnection.peer === peerId
+      )
   );
   const participantsToDisconnect = participants.filter(
     (participant) =>
       !peerIds.includes(participant.mediaConnection.peer) &&
-      !isHost(participant.mediaConnection.peer),
+      !isHost(participant.mediaConnection.peer)
   );
 
   return { peerIdsToCall, participantsToDisconnect };
 }
 
 export function removeInactiveParticipants(
-  setState: React.Dispatch<React.SetStateAction<ParticipantType[]>>,
+  setState: React.Dispatch<React.SetStateAction<ParticipantType[]>>
 ) {
   if (!isHost()) return;
 
@@ -99,7 +94,7 @@ export function removeInactiveParticipants(
     return current.filter(
       (participant) =>
         !participant.lastHeartbeat ||
-        Date.now() - participant.lastHeartbeat < 2000,
+        Date.now() - participant.lastHeartbeat < 2000
     );
   });
 }
