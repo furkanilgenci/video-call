@@ -7,7 +7,7 @@ import {
   getDisplayMediaStream,
   getOrCreateMyScreensharePeer,
 } from "../../services/peerjs";
-import React from "react";
+import { useEffect, useRef } from "react";
 import Peer from "peerjs";
 import VideoElement from "./_components/video-element";
 import { useState } from "react";
@@ -36,18 +36,16 @@ const participantsStore = createStore<{
 }));
 
 export default function Call() {
-  const myVideoRef = React.useRef<HTMLVideoElement>(null);
-  const myScreenshareRef = React.useRef<HTMLVideoElement>(null);
-  const [myPeer, setMyPeer] = React.useState<Peer | null>(null);
-  const [myScreensharePeer, setMyScreensharePeer] = React.useState<Peer | null>(
-    null,
-  );
+  const myVideoRef = useRef<HTMLVideoElement>(null);
+  const myScreenshareRef = useRef<HTMLVideoElement>(null);
+  const [myPeer, setMyPeer] = useState<Peer | null>(null);
+  const [myScreensharePeer, setMyScreensharePeer] = useState<Peer | null>(null);
   const [videoStatus, setVideoStatus] = useState(true);
   const [micStatus, setMicStatus] = useState(true);
   const { participants, setParticipants } = participantsStore();
   const { callId } = useParams();
 
-  React.useEffect(() => {
+  useEffect(() => {
     const interval = setInterval(
       () => removeInactiveParticipants(setParticipants),
       500,
@@ -57,7 +55,7 @@ export default function Call() {
     };
   }, []);
 
-  React.useEffect(() => {
+  useEffect(() => {
     (async () => {
       if (myPeer) return;
       if (!callId) {
