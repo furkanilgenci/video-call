@@ -12,28 +12,13 @@ import Peer from "peerjs";
 import VideoElement from "./_components/video-element";
 import { useState } from "react";
 import {
-  ParticipantType,
   addParticipant,
   handleHeartbeat,
   handleNotifyConnectedParticipants,
   removeInactiveParticipants,
   removeParticipant,
 } from "./_utils";
-import { create as createStore } from "zustand";
-
-const participantsStore = createStore<{
-  participants: ParticipantType[];
-  setParticipants: React.Dispatch<React.SetStateAction<ParticipantType[]>>;
-}>((set) => ({
-  participants: [],
-  setParticipants: (arg: any) =>
-    set((state) => {
-      if (arg instanceof Function) {
-        return { participants: arg(state.participants) };
-      }
-      return { participants: arg };
-    }),
-}));
+import { participantsStore } from "../../store/participantsStore";
 
 export default function Call() {
   const myVideoRef = useRef<HTMLVideoElement>(null);
@@ -122,7 +107,7 @@ export default function Call() {
                   createdPeer.id,
                   // @ts-ignore
                   data.peerIds,
-                  participantsStore.getState().participants,
+                  participantsStore.getState().participants
                 );
 
               peerIdsToCall.forEach((peerId) => {
@@ -138,7 +123,7 @@ export default function Call() {
               participantsToDisconnect.forEach((participant) => {
                 removeParticipant(
                   setParticipants,
-                  participant.mediaConnection.peer,
+                  participant.mediaConnection.peer
                 );
                 participant.mediaConnection.close();
               });
